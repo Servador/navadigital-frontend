@@ -196,19 +196,5 @@ document.getElementById("doneBtn").onclick = async () => {
 };
 </script>
 
-    // ✅ simpan orderId ke localStorage agar success.html bisa ambil
-    localStorage.setItem("lastOrderId", result.id);
-
-    localStorage.removeItem("orderPayment");
-    localStorage.removeItem("checkoutData");
-
-    window.location.href = "success.html";
-
-  } catch (e) {
-    console.error(e);
-    alert("⚠ Gagal menghubungi server!");
-  }
-};
-  </script>
 </body>
 </html>
