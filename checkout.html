@@ -136,6 +136,18 @@
     color: #e53935;
     margin-top: 6px;
   }
+  .bank-box span {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  color: #111;
+}
+
+.bank-box div {
+  font-size: 13px;
+  color: #555;
+  margin-top: 2px;
+}
 </style>
 
 </head>
@@ -233,34 +245,51 @@ document.getElementById("payBtn").addEventListener("click", async () => {
     qrImg.style.display = "none";
     const bankList = [];
 
-    if (method === "SeaBank" || method === "All") {
-      bankList.push({ 
-        title: "🏦 SEA BANK", 
-        info: "SeaBank — 901922960772 (a.n. Muhammad Faiz Rizqi)" 
-      });
-    }
-    if (method === "Gopay" || method === "All") {
-      bankList.push({ 
-        title: "🏦 GOPAY", 
-        info: "Gopay — 0821-2983-7460 (a.n. Muhammad Faiz Rizqi)" 
-      });
-    }
-    if (method === "BCA" || method === "All") {
-      bankList.push({ 
-        title: "🏦 BCA", 
-        info: "BCA — 6050649502 (a.n. Muhammad Faiz Rizqi)" 
-      });
-    }
+    // normalisasi agar tidak case sensitive
+const methodNormalized = method.toLowerCase();
+
+if (methodNormalized === "seabank" || methodNormalized === "all") {
+  bankList.push({
+    title: "🏦 SEA BANK",
+    info: "SeaBank — 901922960772 (a.n. Muhammad Faiz Rizqi)"
+  });
+}
+
+if (methodNormalized === "gopay" || methodNormalized === "all") {
+  bankList.push({
+    title: "📱 GOPAY",
+    info: "GoPay — 0821-2983-7460 (a.n. Muhammad Faiz Rizqi)"
+  });
+}
+
+if (methodNormalized === "bca" || methodNormalized === "all") {
+  bankList.push({
+    title: "🏦 BCA",
+    info: "BCA — 6050649502 (a.n. Muhammad Faiz Rizqi)"
+  });
+}
+
+if (methodNormalized === "jago" || methodNormalized === "all") {
+  bankList.push({
+    title: "🏦 BANK JAGO",
+    info: "Bank Jago — 105686282051 (a.n. Muhammad Faiz Rizqi)"
+  });
+}
 
     // buat tiap kotak rekening
     bankList.forEach(b => {
       const div = document.createElement("div");
       div.className = "bank-box";
       div.innerHTML = `
-        <b>${b.title}</b>
-        <span>${b.info}</span><br>
-        <small>Pastikan transfer sesuai total di atas</small>
-      `;
+  <b>${b.title}</b>
+  <span>${b.info.split("(")[0].trim()}</span>
+  <div style="font-size:13px;color:#555;margin-top:2px;">
+    ${b.info.match(/\(a\.n\.[^)]+\)/)?.[0] || ""}
+  </div>
+  <small style="display:block;margin-top:6px;color:#777;">
+    Pastikan transfer sesuai total di atas
+  </small>
+`;
       qrBox.appendChild(div);
     });
   }
