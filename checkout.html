@@ -41,7 +41,13 @@
 
       <input type="text" id="buyerName" placeholder="Nama Lengkap (wajib diisi)">
       <input type="text" id="buyerContact" placeholder="Nomor WhatsApp (wajib diisi)">
-      <select id="methodSelect"><option value="QRIS">QRIS</option></select>
+      <select id="methodSelect">
+  <option value="QRIS">QRIS</option>
+  <option value="GoPay">GoPay</option>
+  <option value="SeaBank">SeaBank</option>
+  <option value="BCA">BCA Transfer</option>
+  <option value="Jago">Bank Jago</option>
+</select>
 
       <button id="payBtn">Buat Pesanan & Tampilkan QR</button>
     </div>
@@ -65,9 +71,9 @@
   </div>
 
   <script>
-const API_BASE = "https://navadigitall-production-8933.up.railway.app"; // ✅ Tambahkan ini
-
+const API_BASE = "https://navadigitall-production-8933.up.railway.app"; // backend kamu
 const data = JSON.parse(localStorage.getItem("checkoutData"));
+
 document.getElementById("productName").textContent = data.productName ?? "-";
 document.getElementById("productPackage").textContent = data.variantTitle ?? "-";
 
@@ -91,6 +97,7 @@ function startTimer() {
 document.getElementById("payBtn").addEventListener("click", async () => {
   const name = buyerName.value.trim();
   const contact = buyerContact.value.trim();
+  const method = document.getElementById("methodSelect").value;
   const btn = document.getElementById("payBtn");
 
   if (!name || !contact) return alert("⚠ Nama & nomor WhatsApp wajib diisi!");
@@ -108,22 +115,47 @@ document.getElementById("payBtn").addEventListener("click", async () => {
   document.getElementById("uniqueCode").innerHTML =
     `Kode Unik: <b>${kodeUnik}</b>`;
 
+  // === Tampilkan QR / Info Rekening sesuai metode ===
+  const qrImg = document.querySelector(".qr-img");
+  const qrBox = document.querySelector(".popup-content");
+
+  if (method === "QRIS") {
+    qrImg.src = "img/qris.jpeg";
+    qrImg.style.display = "block";
+    document.getElementById("summary").innerHTML += `<br><small>Scan QRIS di bawah ini</small>`;
+  } else {
+    qrImg.style.display = "none";
+    let rekeningInfo = "";
+    if (method === "BCA") rekeningInfo = "🏦 BCA — 1234567890 (a.n. Muhammad Faiz Rizqi)";
+    else if (method === "SeaBank") rekeningInfo = "🏦 SeaBank — 898900012345678 (a.n. Muhammad Faiz Rizqi)";
+    else if (method === "Jago") rekeningInfo = "🏦 Bank Jago — 7771234567 (a.n. Muhammad Faiz Rizqi)";
+    else if (method === "GoPay") rekeningInfo = "📱 GoPay — 0821-2983-7460 (a.n. Muhammad Faiz Rizqi)";
+    else rekeningInfo = "Silakan hubungi admin untuk detail pembayaran.";
+
+    const infoEl = document.createElement("div");
+    infoEl.innerHTML = `
+      <div style="margin-top:15px; background:#f8f9fa; padding:10px; border-radius:10px;">
+        <b>💳 ${method.toUpperCase()}</b><br>
+        ${rekeningInfo}<br>
+        <span style="font-size:13px; color:#555;">Pastikan transfer sesuai total di atas</span>
+      </div>
+    `;
+    qrBox.appendChild(infoEl);
+  }
+
   localStorage.setItem("orderPayment", JSON.stringify({
     productId: data.productId,
-    productName: data.productName,
     variantId: data.variantId,
-    variantTitle: data.variantTitle,
-    price: data.price,
     nameBuyer: name,
     contact,
-    kodeUnik,
+    method,
     total
   }));
 
-  await new Promise(r => setTimeout(r, 1000));
   document.getElementById("checkoutBox").classList.add("hidden");
   document.getElementById("qrPopup").classList.remove("hidden");
   startTimer();
+
   btn.disabled = false;
   btn.innerHTML = "Buat Pesanan & Tampilkan QR";
 });
@@ -135,26 +167,34 @@ document.getElementById("doneBtn").onclick = async () => {
   const pay = JSON.parse(localStorage.getItem("orderPayment"));
   if (!pay) return alert("Data pesanan tidak ditemukan!");
 
-  const payload = {
-    product_id: pay.productId,
-    variant_id: pay.variantId,
-    name: pay.nameBuyer,
-    contact: pay.contact,
-    method: "QRIS",
-    total: pay.total
-  };
-
   try {
-    // ✅ kirim langsung ke backend Railway
     const res = await fetch(`${API_BASE}/api/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        product_id: pay.productId,
+        variant_id: pay.variantId,
+        name: pay.nameBuyer,
+        contact: pay.contact,
+        method: pay.method,
+        total: pay.total
+      })
     });
-    const result = await res.json();
-    console.log("✅ Order saved:", result);
 
+    const result = await res.json();
     if (!result.id) return alert("❌ Gagal menyimpan pesanan!");
+
+    localStorage.setItem("lastOrderId", result.id);
+    localStorage.removeItem("orderPayment");
+    localStorage.removeItem("checkoutData");
+
+    window.location.href = "success.html";
+  } catch (e) {
+    console.error(e);
+    alert("⚠ Gagal menghubungi server!");
+  }
+};
+</script>
 
     // ✅ simpan orderId ke localStorage agar success.html bisa ambil
     localStorage.setItem("lastOrderId", result.id);
